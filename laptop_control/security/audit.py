@@ -25,6 +25,9 @@ class AuditLogger:
 
     Attributes:
         log_file: Path to audit log file
+        fail_on_write: If True, write failures raise AuditLogError (fail-closed).
+                       If False, write failures are logged as warnings (safe for
+                       development/testing).
     """
 
     # Patterns for secrets that should never appear in audit logs
@@ -34,17 +37,28 @@ class AuditLogger:
         r"(?i)bearer\s+\S+",
     ]
 
-    def __init__(self, log_file: str) -> None:
+    def __init__(self, log_file: str, fail_on_write: bool = True) -> None:
         """Initialize audit logger.
 
         Creates log file parent directory if it doesn't exist.
 
         Args:
             log_file: Path where audit records will be written
+            fail_on_write: If True, a failure to persist audit records will
+                           raise AuditLogError. If False, failures will be
+                           logged and execution will continue (development mode).
         """
         self.log_file = Path(log_file)
-        self.log_file.parent.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Audit logger initialized: {self.log_file}")
+        # Ensure parent directory exists where possible
+        try:
+            self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            # Directory creation might fail in restricted environments; allow
+            # construction to succeed so callers can decide how to handle writes.
+            pass
+
+        self.fail_on_write = bool(fail_on_write)
+        logger.debug(f"Audit logger initialized: {self.log_file} (fail_on_write={self.fail_on_write})")
 
     def log_operation(
         self,
@@ -66,14 +80,15 @@ class AuditLogger:
             details: Optional additional details about operation
 
         Note:
-            If audit logging fails, logs warning but doesn't raise.
-            This prevents a logging failure from crashing the app.
+            If audit logging fails and fail_on_write is True, AuditLogError is
+            raised. If fail_on_write is False, failures are logged as warnings
+            and execution continues.
         """
-        try:
-            if details is None:
-                details = {}
+        if details is None:
+            details = {}
 
-            # Sanitize details to remove secrets
+        # Sanitize details to remove secrets
+        try:
             sanitized_details = self._sanitize_details(details)
 
             record = {
@@ -86,10 +101,26 @@ class AuditLogger:
                 "details": sanitized_details,
             }
 
-            self._write_record(record)
+            try:
+                self._write_record(record)
+            except AuditLogError as e:
+                # Fail-closed behavior for security-sensitive contexts
+                if self.fail_on_write:
+                    logger.critical("Audit logging failed and fail_on_write is enabled; raising AuditLogError", exc_info=True)
+                    raise
+                else:
+                    logger.warning("Audit logging failed but fail_on_write is disabled; continuing", exc_info=True)
+            return
+
         except Exception as e:
-            logger.warning(f"Audit logging failed: {e}", exc_info=True)
-            # Don't raise - we don't want logging to crash the app
+            # Catch errors that occur during sanitization or record construction
+            if self.fail_on_write:
+                # Wrap and raise a generic AuditLogError without exposing details
+                logger.critical("Audit logging encountered an unexpected error; raising AuditLogError", exc_info=True)
+                raise AuditLogError("Audit logging failed due to an unexpected error") from e
+            else:
+                logger.warning("Audit logging encountered an unexpected error; continuing", exc_info=True)
+                return
 
     def log_authorization_failure(
         self,
@@ -236,10 +267,9 @@ class AuditLogger:
         try:
             with open(self.log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(record) + "\n")
-        except IOError as e:
-            raise AuditLogError(f"Failed to write audit log: {e}") from e
         except Exception as e:
-            raise AuditLogError(f"Unexpected error writing audit log: {e}") from e
+            # Raise a generic AuditLogError without including record contents
+            raise AuditLogError("Failed to write audit log") from e
 
     def read_records(
         self,
