@@ -21,12 +21,19 @@ logger = logging.getLogger(__name__)
 class Config:
     """Application configuration loaded from environment variables.
 
-    All required fields must be set in .env or environment.
-    Optional fields have sensible defaults.
+    During Phase 1 the external integration credentials (Gemini API key
+    and Telegram bot token) are optional so the foundation can start
+    without external services. If those integrations are initialized
+    later, they must perform their own validation and fail if the
+    credentials are missing or invalid.
+
+    All required fields must be set in .env or environment when the
+    corresponding integration is enabled. Optional fields have sensible
+    defaults.
 
     Attributes:
-        gemini_api_key: Google Gemini API key (required)
-        telegram_bot_token: Telegram bot token (required)
+        gemini_api_key: Google Gemini API key (optional in phase 1)
+        telegram_bot_token: Telegram bot token (optional in phase 1)
         authorized_users: Set of authorized Telegram user IDs (required)
         log_level: Logging level (default: INFO)
         log_file: Path to log file (default: logs/laptop_control.log)
@@ -49,13 +56,14 @@ class Config:
         """Load configuration from environment variables.
 
         Loads .env file if present, then reads environment variables.
-        Validates all required fields and types.
+        Validates required fields and types where appropriate.
 
         Returns:
             Config: Configured instance ready to use.
 
         Raises:
-            ConfigurationError: If required fields missing or invalid.
+            ConfigurationError: If required fields missing or invalid for
+                configuration items that must be present (e.g., AUTHORIZED_USERS).
         """
         # Load .env file if it exists
         dotenv_path = Path(".env")
@@ -67,26 +75,26 @@ class Config:
 
         config = cls()
 
-        # Load required fields
+        # Load external integration credentials; make optional during Phase 1
+        # Integrations must validate these when they initialize.
         config.gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
         config.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 
-        # Validate required fields
-        if not config.gemini_api_key:
-            raise ConfigurationError(
-                "GEMINI_API_KEY is required. Set it in .env or environment."
-            )
-        if len(config.gemini_api_key) < 20:
-            raise ConfigurationError(
-                "GEMINI_API_KEY appears invalid (too short). Check .env file."
-            )
+        # If present, perform lightweight validation (do not raise for absence)
+        if config.gemini_api_key:
+            if len(config.gemini_api_key) < 20:
+                raise ConfigurationError(
+                    "GEMINI_API_KEY appears invalid (too short). Check .env file."
+                )
 
-        if not config.telegram_bot_token:
-            raise ConfigurationError(
-                "TELEGRAM_BOT_TOKEN is required. Set it in .env or environment."
-            )
+        if config.telegram_bot_token:
+            # Basic sanity check: tokens are typically non-trivial strings
+            if len(config.telegram_bot_token) < 10:
+                raise ConfigurationError(
+                    "TELEGRAM_BOT_TOKEN appears invalid (too short). Check .env file."
+                )
 
-        # Load and parse authorized users
+        # Load and parse authorized users (required)
         authorized_users_str = os.getenv("AUTHORIZED_USERS", "").strip()
         if not authorized_users_str:
             raise ConfigurationError(
