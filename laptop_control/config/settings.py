@@ -21,19 +21,13 @@ logger = logging.getLogger(__name__)
 class Config:
     """Application configuration loaded from environment variables.
 
-    During Phase 1 the external integration credentials (Gemini API key
-    and Telegram bot token) are optional so the foundation can start
-    without external services. If those integrations are initialized
-    later, they must perform their own validation and fail if the
-    credentials are missing or invalid.
-
-    All required fields must be set in .env or environment when the
-    corresponding integration is enabled. Optional fields have sensible
-    defaults.
+    External integration credentials (Gemini API key and Telegram bot token)
+    are required. All required fields must be set in .env or environment.
+    Optional fields have sensible defaults.
 
     Attributes:
-        gemini_api_key: Google Gemini API key (optional in phase 1)
-        telegram_bot_token: Telegram bot token (optional in phase 1)
+        gemini_api_key: Google Gemini API key (required)
+        telegram_bot_token: Telegram bot token (required)
         authorized_users: Set of authorized Telegram user IDs (required)
         log_level: Logging level (default: INFO)
         log_file: Path to log file (default: logs/laptop_control.log)
@@ -75,12 +69,17 @@ class Config:
 
         config = cls()
 
-        # Load external integration credentials; make optional during Phase 1
-        # Integrations must validate these when they initialize.
+        # Load external integration credentials; these are required
         config.gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
         config.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 
-        # If present, perform lightweight validation (do not raise for absence)
+        # Enforce presence of integration credentials
+        if not config.gemini_api_key:
+            raise ConfigurationError("GEMINI_API_KEY is required")
+        if not config.telegram_bot_token:
+            raise ConfigurationError("TELEGRAM_BOT_TOKEN is required")
+
+        # Lightweight validation of credential formats
         if config.gemini_api_key:
             if len(config.gemini_api_key) < 20:
                 raise ConfigurationError(
