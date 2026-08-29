@@ -2,9 +2,13 @@
 
 Run with: python -m laptop_control.main
 
-This is a foundational entry point that loads configuration,
-initializes logging, and validates the environment.
-Full system integration happens in Phase 1B+.
+Phase Status:
+- Phase 1 (foundation): Complete - Core architecture, security framework, and tool scaffolding
+- Phase 2 (security + tools): In review - Keyboard, mouse, and screen tools with backend pending
+- Gemini/Telegram integration: Not yet implemented (Phase 3+)
+
+This entry point loads configuration, initializes logging, and validates the environment.
+Full message processing and Gemini/Telegram integration will be implemented in Phase 3+.
 """
 
 import asyncio
@@ -107,16 +111,17 @@ class Application:
     async def run(self) -> None:
         """Main application event loop.
 
-        In Phase 1A, this is a placeholder.
-        Phase 1B+ will implement actual message processing.
+        Phase 1 (foundation) is complete.
+        Phase 2 (security + tools) is in review with backend integrations pending.
+        Phase 3+ will implement Gemini AI and Telegram integration for message processing.
         """
-        self.logger.info("Application event loop started (Phase 1A foundation)")
-        self.logger.info(
-            "Ready for Phase 1B implementation: Gemini AI + Telegram integration"
-        )
+        self.logger.info("Application event loop started")
+        self.logger.info("Phase 1 (foundation): Complete")
+        self.logger.info("Phase 2 (security + tools): In review - backend integrations pending")
+        self.logger.info("Phase 3+ (Gemini/Telegram integration): Not yet implemented")
 
-        # In foundation phase, just stay alive for a bit
-        # Full implementation will process messages here
+        # In current phase, just stay alive
+        # Full message processing will be implemented in Phase 3+
         try:
             while self.running:
                 await asyncio.sleep(0.1)
