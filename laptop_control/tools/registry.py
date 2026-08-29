@@ -99,6 +99,14 @@ class ToolRegistry:
         if tool.name in self.tools:
             raise ToolExecutionError(f"Tool '{tool.name}' is already registered")
 
+        # Inject the registry's authorizer and audit_logger into the tool so that
+        # BaseTool.execute can log and use the same authorization/audit objects.
+        try:
+            setattr(tool, "authorizer", self.authorizer)
+            setattr(tool, "audit_logger", self.audit_logger)
+        except Exception:
+            logger.warning(f"Failed to inject authorizer/audit_logger into tool {tool.name}")
+
         self.tools[tool.name] = tool
         logger.info(f"Tool registered: {tool.name}")
 
