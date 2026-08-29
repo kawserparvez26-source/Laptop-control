@@ -1,24 +1,8 @@
 *** Begin Patch
 *** Update File: laptop_control/tools/screen.py
 @@
--                    store = ArtifactStore()
--                    stream = io.BytesIO(png_data)
--                    meta = store.create_artifact(
--                        owner=str(user_id),
--                        tool_name=self.name,
--                        stream=stream,
--                        mime_type="image/png",
--                        ttl_seconds=3600,  # default 1 hour expiry; configurable in future
--                        summary=f"Screenshot {width}x{height}",
--                    )
-+                    store = ArtifactStore(authorizer=None)
-+                    stream = io.BytesIO(png_data)
-+                    meta = store.create_artifact(
-+                        caller_user_id=user_id,
-+                        tool_name=self.name,
-+                        stream=stream,
-+                        mime_type_hint="image/png",
-+                        ttl_seconds=3600,  # default 1 hour expiry; configurable in future
-+                        summary=f"Screenshot {width}x{height}",
-+                    )
+-                    store = ArtifactStore(authorizer=None)
++                    # Note: In runtime the real AuthorizationManager and AuditLogger
++                    # should be injected into ArtifactStore. For now use None.
++                    store = ArtifactStore(authorizer=None, emergency_stop=None, audit_logger=None)
 *** End Patch
