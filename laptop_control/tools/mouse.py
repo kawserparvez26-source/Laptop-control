@@ -8,7 +8,7 @@ Provides safe mouse control with strict security boundaries:
 - No arbitrary button/parameter injection
 - Full audit logging and authorization integration
 
-Supported operations (Phase 2D foundation):
+Supported operations (Phase 2 - backend pending):
 - move: Move mouse to specified (x, y) coordinates
 - click: Left-click at specified (x, y) coordinates
 
@@ -101,7 +101,7 @@ class MouseTool(BaseTool):
         """
         super().__init__(
             name="mouse",
-            description="Secure mouse control with coordinate bounds (Phase 2D foundation)",
+            description="Secure mouse control with coordinate bounds (Phase 2 - backend pending)",
             risk_level=RiskLevel.HIGH,
             authorizer=authorizer,
             audit_logger=audit_logger,
