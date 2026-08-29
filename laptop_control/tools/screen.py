@@ -10,7 +10,7 @@ Provides safe screen capture with strict security controls:
 - Resource limits (max dimensions, output size)
 - Full audit logging and authorization integration
 
-Supported operations (Phase 2E foundation):
+Supported operations (Phase 2 - backend pending):
 - capture: Capture screen to binary PNG data
 
 This is NOT a screen monitoring, recording, or automation tool.
@@ -114,7 +114,7 @@ class ScreenTool(BaseTool):
         """
         super().__init__(
             name="screen",
-            description="Secure screen capture with resource limits (Phase 2E foundation)",
+            description="Secure screen capture with resource limits (Phase 2 - backend pending)",
             risk_level=RiskLevel.HIGH,
             authorizer=authorizer,
             audit_logger=audit_logger,
