@@ -8,7 +8,7 @@ Provides safe keyboard input with strict security controls:
 - Strict text input limits
 - Full audit logging and authorization integration
 
-Supported operations (Phase 2C foundation):
+Supported operations (Phase 2 - backend pending):
 - press_key: Simulate pressing a single key from the allowlist
 - type_text: Type limited text (with strict safety boundaries)
 
@@ -70,7 +70,7 @@ class KeyboardTool(BaseTool):
     # Maximum text length for type_text operations
     DEFAULT_MAX_TEXT_LENGTH = 256
 
-    # Phase 2C foundation: minimal safe keys for basic control
+    # Phase 2 - backend pending: minimal safe keys for basic control
     DEFAULT_ALLOWED_KEYS = frozenset([
         "enter",      # Return/Enter key
         "escape",     # Escape key
@@ -105,7 +105,7 @@ class KeyboardTool(BaseTool):
         """
         super().__init__(
             name="keyboard",
-            description="Secure keyboard input with operation allowlist (Phase 2C foundation)",
+            description="Secure keyboard input with operation allowlist (Phase 2 - backend pending)",
             risk_level=RiskLevel.HIGH,
             authorizer=authorizer,
             audit_logger=audit_logger,
